@@ -45,7 +45,9 @@
 #include <utility>
 #include <vector>
 
+#ifdef _REENTRANT
 #include <tbb/concurrent_queue.h>
+#endif
 
 #include "ips2ra_fwd.hpp"
 #include "bucket_pointers.hpp"
@@ -250,8 +252,10 @@ struct Sorter<Cfg>::SharedData {
     // Bigtasks. One entry per thread.
     std::vector<BigTask> big_tasks;
 
+#ifdef _REENTRANT
     // Scheduler of small tasks.
     Scheduler<Task> scheduler;
+#endif
 
     SharedData(typename Cfg::Extractor extractor, typename Cfg::Sync sync,
                int num_threads)
@@ -260,7 +264,10 @@ struct Sorter<Cfg>::SharedData {
         , local(num_threads)
         , thread_pools(num_threads)
         , big_tasks(num_threads)
-        , scheduler(num_threads) {
+#ifdef _REENTRANT
+        , scheduler(num_threads)
+#endif
+        {
         reset();
     }
 
@@ -270,7 +277,9 @@ struct Sorter<Cfg>::SharedData {
     void reset() {
         std::fill_n(bucket_start, Cfg::kMaxBuckets + 1, 0);
         overflow = nullptr;
+#ifdef _REENTRANT
         scheduler.reset();
+#endif
     }
 };
 
